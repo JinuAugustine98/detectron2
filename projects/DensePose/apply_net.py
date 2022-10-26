@@ -9,6 +9,7 @@ import pickle
 import sys
 from typing import Any, ClassVar, Dict, List
 import torch
+from PIL import Image
 
 from detectron2.config import CfgNode, get_cfg
 from detectron2.data.detection_utils import read_image
@@ -166,6 +167,7 @@ class DumpAction(InferenceAction):
         image_fpath = entry["file_name"]
         logger.info(f"Processing {image_fpath}")
         result = {"file_name": image_fpath}
+        print(outputs["pred_masks"])
         if outputs.has("scores"):
             result["scores"] = outputs.get("scores").cpu()
         if outputs.has("pred_boxes"):
@@ -252,7 +254,7 @@ class ShowAction(InferenceAction):
         parser.add_argument(
             "--output",
             metavar="<image_file>",
-            default="outputres.png",
+            default="/home/snipl/Documents/SoliMet/SoliMet/contour.png",
             help="File name to save output to",
         )
 
@@ -280,7 +282,9 @@ class ShowAction(InferenceAction):
         image_fpath = entry["file_name"]
         logger.info(f"Processing {image_fpath}")
         image = cv2.cvtColor(entry["image"], cv2.COLOR_BGR2GRAY)
+        # (thresh, image) = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY)
         image = np.tile(image[:, :, np.newaxis], [1, 1, 3])
+        image = np.zeros((image.shape), dtype="uint8")
         data = extractor(outputs)
         image_vis = visualizer.visualize(image, data)
         entry_idx = context["entry_idx"] + 1
@@ -288,7 +292,7 @@ class ShowAction(InferenceAction):
         out_dir = os.path.dirname(out_fname)
         if len(out_dir) > 0 and not os.path.exists(out_dir):
             os.makedirs(out_dir)
-        cv2.imwrite(out_fname, image_vis)
+        cv2.imwrite(out_fname, image_vis )
         logger.info(f"Output saved to {out_fname}")
         context["entry_idx"] += 1
 
